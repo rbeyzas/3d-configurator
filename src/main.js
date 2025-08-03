@@ -10,9 +10,9 @@ class WardrobeConfigurator {
     this.controls = null;
     this.modules = [];
     this.currentDimensions = { width: 60, height: 60, depth: 60 };
-    this.moduleWidth = 60; // Base module width
-    this.currentMaterial = 'wood'; // Track current material
-    this.individualModuleData = []; // Track individual module settings
+    this.moduleWidth = 60;
+    this.currentMaterial = 'wood';
+    this.individualModuleData = [];
 
     this.init();
     this.setupControls();
@@ -20,14 +20,11 @@ class WardrobeConfigurator {
   }
 
   init() {
-    // Get canvas element
     const canvas = document.getElementById('scene');
 
-    // Scene setup
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xf0f0f0);
 
-    // Camera setup
     this.camera = new THREE.PerspectiveCamera(
       75,
       canvas.clientWidth / canvas.clientHeight,
@@ -36,13 +33,11 @@ class WardrobeConfigurator {
     );
     this.camera.position.set(200, 150, 200);
 
-    // Renderer setup
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       antialias: true,
     });
 
-    // Force canvas to fill container
     const container = canvas.parentElement;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
@@ -52,28 +47,37 @@ class WardrobeConfigurator {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // OrbitControls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
 
-    // Lighting
     this.setupLighting();
 
-    // Create initial module
     this.createModule(0, 0, 0);
 
-    // Handle window resize
     window.addEventListener('resize', () => this.onWindowResize());
   }
 
   setupLighting() {
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    const envTexture = new THREE.CubeTextureLoader().load([
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // right
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // left
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // top
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // bottom
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // front
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // back
+    ]);
+
+    this.scene.environment = envTexture;
+    this.scene.background = new THREE.Color(0x87ceeb);
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
     this.scene.add(ambientLight);
 
-    // Directional light (sun)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(100, 100, 50);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
@@ -84,37 +88,42 @@ class WardrobeConfigurator {
     directionalLight.shadow.camera.right = 200;
     directionalLight.shadow.camera.top = 200;
     directionalLight.shadow.camera.bottom = -200;
+    directionalLight.shadow.bias = -0.0001;
     this.scene.add(directionalLight);
 
-    // Point light for additional illumination
-    const pointLight = new THREE.PointLight(0xffffff, 0.5);
+    const pointLight = new THREE.PointLight(0xffffff, 0.3);
     pointLight.position.set(-50, 100, -50);
     this.scene.add(pointLight);
+
+    const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+    const groundMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -30;
+    ground.receiveShadow = true;
+    this.scene.add(ground);
   }
 
   createModule(x, y, z, moduleIndex = null) {
     const moduleGroup = new THREE.Group();
 
-    // Get individual module settings or use global settings
     let moduleSettings;
     if (moduleIndex !== null && this.individualModuleData[moduleIndex]) {
       moduleSettings = {
-        width: 60, // Each module is 60cm wide according to task
+        width: 60,
         height: this.individualModuleData[moduleIndex].height,
         depth: this.individualModuleData[moduleIndex].depth,
         material: this.currentMaterial,
       };
     } else {
-      // For automatic modules, use 60cm for all dimensions
       moduleSettings = {
-        width: 60, // Each module is 60cm wide according to task
-        height: 60, // Start with 60cm height for new modules
-        depth: 60, // Start with 60cm depth for new modules
+        width: 60,
+        height: 60,
+        depth: 60,
         material: this.currentMaterial,
       };
     }
 
-    // Create wardrobe geometry
     const geometry = new THREE.BoxGeometry(
       moduleSettings.width,
       moduleSettings.height,
@@ -123,20 +132,32 @@ class WardrobeConfigurator {
 
     console.log(`Creating module ${moduleIndex} with settings:`, moduleSettings);
 
-    // Get material color
-    const colors = {
-      wood: 0x8b4513,
-      white: 0xffffff,
-      black: 0x000000,
-      gray: 0x808080,
+    const materialProperties = {
+      wood: {
+        color: 0x8b4513,
+        metalness: 0.0,
+        roughness: 0.8,
+      },
+      white: {
+        color: 0xffffff,
+        metalness: 0.0,
+        roughness: 0.3,
+      },
+
+      gray: {
+        color: 0x808080,
+        metalness: 0.0,
+        roughness: 0.5,
+      },
     };
 
-    // Create material with module's material color
-    const material = new THREE.MeshPhongMaterial({
-      color: colors[moduleSettings.material] || 0x8b4513,
-      shininess: 30,
-      transparent: true,
-      opacity: 0.9,
+    const materialType = moduleSettings.material || 'wood';
+    const properties = materialProperties[materialType];
+    const material = new THREE.MeshStandardMaterial({
+      color: properties.color,
+      metalness: properties.metalness,
+      roughness: properties.roughness,
+      envMapIntensity: 1.0,
     });
 
     const wardrobe = new THREE.Mesh(geometry, material);
@@ -144,13 +165,10 @@ class WardrobeConfigurator {
     wardrobe.receiveShadow = true;
     wardrobe.position.set(x, y, z);
 
-    // Add wardrobe to module group
     moduleGroup.add(wardrobe);
 
-    // Add door details with individual dimensions
     this.addDoorDetails(moduleGroup, x, y, z, moduleSettings);
 
-    // Store module data
     const moduleData = {
       group: moduleGroup,
       wardrobe: wardrobe,
@@ -166,38 +184,45 @@ class WardrobeConfigurator {
   }
 
   addDoorDetails(moduleGroup, x, y, z, moduleSettings) {
-    // Create door frame
     const doorFrameGeometry = new THREE.BoxGeometry(
       moduleSettings.width - 4,
       moduleSettings.height - 4,
       2,
     );
-    const doorFrameMaterial = new THREE.MeshPhongMaterial({ color: 0x654321 });
+    const doorFrameMaterial = new THREE.MeshStandardMaterial({
+      color: 0x654321,
+      metalness: 0.0,
+      roughness: 0.9,
+    });
     const doorFrame = new THREE.Mesh(doorFrameGeometry, doorFrameMaterial);
     doorFrame.position.set(x, y, z + moduleSettings.depth / 2 + 1);
     doorFrame.castShadow = true;
     moduleGroup.add(doorFrame);
 
-    // Create door panels
     const panelWidth = (moduleSettings.width - 8) / 2;
     const panelGeometry = new THREE.BoxGeometry(panelWidth, moduleSettings.height - 8, 1);
-    const panelMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+    const panelMaterial = new THREE.MeshStandardMaterial({
+      color: 0x8b4513,
+      metalness: 0.0,
+      roughness: 0.8,
+    });
 
-    // Left panel
     const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
     leftPanel.position.set(x - panelWidth / 2 - 2, y, z + moduleSettings.depth / 2 + 1.5);
     leftPanel.castShadow = true;
     moduleGroup.add(leftPanel);
 
-    // Right panel
     const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
     rightPanel.position.set(x + panelWidth / 2 + 2, y, z + moduleSettings.depth / 2 + 1.5);
     rightPanel.castShadow = true;
     moduleGroup.add(rightPanel);
 
-    // Add single door handle in the center of the module
     const handleGeometry = new THREE.CylinderGeometry(0.5, 0.5, 8, 8);
-    const handleMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
+    const handleMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      metalness: 0.9,
+      roughness: 0.1,
+    });
 
     const centerHandle = new THREE.Mesh(handleGeometry, handleMaterial);
     centerHandle.rotation.z = Math.PI / 2;
@@ -208,44 +233,36 @@ class WardrobeConfigurator {
   updateModules() {
     console.log(`Updating modules - current width: ${this.currentDimensions.width}`);
 
-    // Clear existing modules
     this.modules.forEach((module) => {
       this.scene.remove(module.group);
     });
     this.modules = [];
 
-    // Calculate number of modules needed based on total width
     const totalWidth = this.currentDimensions.width;
-    const numModules = Math.ceil(totalWidth / 60); // Each module is 60cm wide
+    const numModules = Math.ceil(totalWidth / 60);
     console.log(`Creating ${numModules} modules`);
 
-    // Create modules with proper positioning (each module is 60cm wide)
     let currentX = 0;
     for (let i = 0; i < numModules; i++) {
-      // Each module is 60cm wide according to task requirements
       console.log(`Creating module ${i} at position ${currentX}`);
 
-      // Initialize individual module data if it doesn't exist
       if (!this.individualModuleData[i]) {
         this.individualModuleData[i] = {
-          width: 60, // Each module is 60cm wide according to task
-          height: 60, // Start with 60cm height for new modules
-          depth: 60, // Start with 60cm depth for new modules
+          width: 60,
+          height: 60,
+          depth: 60,
           material: this.currentMaterial,
         };
       }
 
       this.createModule(currentX, 0, 0, i);
-      currentX += 60; // Each module is 60cm wide
+      currentX += 60;
     }
 
-    // Update module counter first
     this.updateModuleCounter();
 
-    // Update specifications after all modules are created
     this.updateSpecifications();
 
-    // Update individual module controls last
     this.updateIndividualModuleControls();
   }
 
@@ -257,22 +274,30 @@ class WardrobeConfigurator {
       document.querySelector('.scene-container').appendChild(counter);
     }
     counter.textContent = `${this.modules.length} Module${this.modules.length > 1 ? 's' : ''}`;
-
-    // Don't call updateSpecifications here to avoid circular dependency
-    // Specifications will be updated by the calling function
   }
 
   updateSpecifications() {
-    // Calculate actual total width from modules
     let actualTotalWidth = 0;
     let maxHeight = 0;
     let maxDepth = 0;
 
-    this.modules.forEach((module) => {
-      actualTotalWidth += module.dimensions.width;
-      maxHeight = Math.max(maxHeight, module.dimensions.height);
-      maxDepth = Math.max(maxDepth, module.dimensions.depth);
+    console.log('Calculating specifications for modules:', this.modules.length);
+
+    this.modules.forEach((module, index) => {
+      const moduleWidth = module.dimensions.width;
+      const moduleHeight = module.dimensions.height;
+      const moduleDepth = module.dimensions.depth;
+
+      actualTotalWidth += moduleWidth;
+      maxHeight = Math.max(maxHeight, moduleHeight);
+      maxDepth = Math.max(maxDepth, moduleDepth);
+
+      console.log(
+        `Module ${index}: width=${moduleWidth}, height=${moduleHeight}, depth=${moduleDepth}`,
+      );
     });
+
+    console.log(`Final specs: width=${actualTotalWidth}, height=${maxHeight}, depth=${maxDepth}`);
 
     document.getElementById('total-width').textContent = `${actualTotalWidth} cm`;
     document.getElementById('total-height').textContent = `${maxHeight} cm`;
@@ -287,9 +312,7 @@ class WardrobeConfigurator {
       return;
     }
 
-    // Prevent infinite loop by checking if we're already updating
     if (this._updatingControls) {
-      console.log('Already updating controls, skipping...');
       return;
     }
 
@@ -312,12 +335,11 @@ class WardrobeConfigurator {
     moduleDiv.className = 'module-control';
     moduleDiv.dataset.moduleIndex = moduleIndex;
 
-    // Get module settings or create default
     if (!this.individualModuleData[moduleIndex]) {
       this.individualModuleData[moduleIndex] = {
-        width: 60, // Each module is 60cm wide according to task
-        height: 60, // Start with 60cm height for new modules
-        depth: 60, // Start with 60cm depth for new modules
+        width: 60,
+        height: 60,
+        depth: 60,
         material: this.currentMaterial,
       };
     }
@@ -356,7 +378,6 @@ class WardrobeConfigurator {
       </div>
     `;
 
-    // Add event listeners
     this.setupModuleControlEvents(moduleDiv, moduleIndex);
 
     console.log(
@@ -371,7 +392,6 @@ class WardrobeConfigurator {
   setupModuleControlEvents(moduleDiv, moduleIndex) {
     console.log(`Setting up events for module ${moduleIndex}`);
 
-    // Toggle module content
     const header = moduleDiv.querySelector('.module-header');
     const content = moduleDiv.querySelector('.module-content');
 
@@ -386,9 +406,6 @@ class WardrobeConfigurator {
     } else {
       console.error(`Header or content not found for module ${moduleIndex}`);
     }
-
-    // Width is fixed at 60cm according to task requirements
-    // Width slider is disabled and shows fixed value
 
     // Height control
     const heightSlider = moduleDiv.querySelector('.module-height');
@@ -438,12 +455,10 @@ class WardrobeConfigurator {
   updateSingleModule(moduleIndex) {
     console.log(`Updating single module ${moduleIndex}`);
 
-    // Remove the specific module and dispose of geometries
     if (this.modules[moduleIndex]) {
       const oldModule = this.modules[moduleIndex];
       console.log(`Removing old module ${moduleIndex}`);
 
-      // Dispose of all geometries and materials in the module group
       oldModule.group.traverse((child) => {
         if (child.geometry) {
           child.geometry.dispose();
@@ -458,32 +473,22 @@ class WardrobeConfigurator {
       console.error(`Module ${moduleIndex} not found in modules array`);
     }
 
-    // Calculate new position based on all modules (each module is 60cm wide)
-    let currentX = moduleIndex * 60; // Each module is 60cm wide
+    let currentX = moduleIndex * 60;
 
-    // Recreate the module with new settings and position
     const newModule = this.createModule(currentX, 0, 0, moduleIndex);
     this.modules[moduleIndex] = newModule;
 
-    // Don't update subsequent modules when changing individual settings
-    // This preserves individual module settings
-
-    // Force render update
     this.renderer.render(this.scene, this.camera);
 
-    // Don't call updateSpecifications here to avoid infinite loop
-    // Specifications will be updated by the calling function if needed
+    this.updateSpecifications();
   }
 
   updateSubsequentModules(startIndex) {
     console.log(`Updating subsequent modules from index ${startIndex}`);
 
-    // Update all subsequent modules (each module is 60cm wide)
     for (let i = startIndex; i < this.modules.length; i++) {
-      // Remove old module
       if (this.modules[i]) {
         const oldModule = this.modules[i];
-        console.log(`Removing subsequent module ${i}`);
         oldModule.group.traverse((child) => {
           if (child.geometry) {
             child.geometry.dispose();
@@ -495,7 +500,6 @@ class WardrobeConfigurator {
         this.scene.remove(oldModule.group);
       }
 
-      // Create new module at correct position (each module is 60cm wide)
       const currentX = i * 60;
       console.log(`Creating subsequent module ${i} at position ${currentX}`);
       const newModule = this.createModule(currentX, 0, 0, i);
@@ -516,9 +520,6 @@ class WardrobeConfigurator {
       this.currentDimensions.width = parseInt(e.target.value);
       widthValue.textContent = e.target.value;
 
-      // Don't clear individual module data when global width changes
-      // Keep existing individual settings for existing modules
-
       this.updateModules();
       this.updateSpecifications();
     });
@@ -528,7 +529,6 @@ class WardrobeConfigurator {
       this.currentDimensions.height = parseInt(e.target.value);
       heightValue.textContent = e.target.value;
 
-      // Update all modules that don't have individual height settings
       this.modules.forEach((module, index) => {
         if (!this.individualModuleData[index] || !this.individualModuleData[index].height) {
           if (this.individualModuleData[index]) {
@@ -538,11 +538,8 @@ class WardrobeConfigurator {
         }
       });
 
-      // Update specifications first
       this.updateSpecifications();
 
-      // Update individual module controls to reflect new global height
-      // Only update if we have modules
       if (this.modules.length > 0) {
         this.updateIndividualModuleControls();
       }
@@ -553,7 +550,6 @@ class WardrobeConfigurator {
       this.currentDimensions.depth = parseInt(e.target.value);
       depthValue.textContent = e.target.value;
 
-      // Update all modules that don't have individual depth settings
       this.modules.forEach((module, index) => {
         if (!this.individualModuleData[index] || !this.individualModuleData[index].depth) {
           if (this.individualModuleData[index]) {
@@ -563,23 +559,17 @@ class WardrobeConfigurator {
         }
       });
 
-      // Update specifications first
       this.updateSpecifications();
 
-      // Update individual module controls to reflect new global depth
-      // Only update if we have modules
       if (this.modules.length > 0) {
         this.updateIndividualModuleControls();
       }
     });
 
-    // Material options
     this.setupMaterialControls();
 
-    // View options
     this.setupViewControls();
 
-    // Export options
     this.setupExportControls();
   }
 
@@ -587,9 +577,7 @@ class WardrobeConfigurator {
     const materialBtns = document.querySelectorAll('.material-btn');
     materialBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        // Remove active class from all buttons
         materialBtns.forEach((b) => b.classList.remove('active'));
-        // Add active class to clicked button
         e.target.classList.add('active');
 
         const material = e.target.dataset.material;
@@ -602,9 +590,7 @@ class WardrobeConfigurator {
     const viewBtns = document.querySelectorAll('.view-btn');
     viewBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        // Remove active class from all buttons
         viewBtns.forEach((b) => b.classList.remove('active'));
-        // Add active class to clicked button
         e.target.classList.add('active');
 
         const view = e.target.dataset.view;
@@ -614,7 +600,6 @@ class WardrobeConfigurator {
   }
 
   setupExportControls() {
-    // Screenshot button
     const screenshotBtn = document.getElementById('screenshot');
     if (screenshotBtn) {
       screenshotBtn.addEventListener('click', () => {
@@ -624,11 +609,9 @@ class WardrobeConfigurator {
       console.error('Screenshot button not found');
     }
 
-    // Reset view button
     const resetViewBtn = document.getElementById('reset-view');
     if (resetViewBtn) {
       resetViewBtn.addEventListener('click', () => {
-        console.log('Reset view button clicked');
         this.resetView();
       });
     } else {
@@ -646,10 +629,8 @@ class WardrobeConfigurator {
 
     const color = colors[material];
     if (color) {
-      // Update current material
       this.currentMaterial = material;
 
-      // Update all existing modules
       this.modules.forEach((module) => {
         module.wardrobe.material.color.setHex(color);
       });
@@ -682,8 +663,6 @@ class WardrobeConfigurator {
   }
 
   resetView() {
-    console.log('Resetting all customizations to default');
-
     // Reset camera position
     this.camera.position.set(200, 150, 200);
     this.controls.target.set(0, 0, 0);
@@ -728,7 +707,6 @@ class WardrobeConfigurator {
       }
     });
 
-    // Update modules with default settings
     this.updateModules();
 
     console.log('All customizations reset to default');
@@ -752,7 +730,6 @@ class WardrobeConfigurator {
   }
 }
 
-// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
   new WardrobeConfigurator();
 });
