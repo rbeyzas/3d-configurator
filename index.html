@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Wardrobe Configurator</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">
+        <div class="controls">
+          <h1>3D Wardrobe Configurator</h1>
+          <div class="control-group">
+            <label for="width">Width (cm): <span id="width-value">60</span></label>
+            <input type="range" id="width" min="60" max="180" value="60" step="10" />
+          </div>
+          <div class="control-group">
+            <label for="height">Height (cm): <span id="height-value">60</span></label>
+            <input type="range" id="height" min="60" max="240" value="60" step="10" />
+          </div>
+          <div class="control-group">
+            <label for="depth">Depth (cm): <span id="depth-value">60</span></label>
+            <input type="range" id="depth" min="60" max="120" value="60" step="10" />
+          </div>
+          <div class="info">
+            <p>• Left side remains fixed during resizing</p>
+            <p>• Additional modules appear when width exceeds 60cm</p>
+            <p>• Use mouse to rotate, scroll to zoom</p>
+          </div>
+        </div>
+        <div class="scene-container">
+          <canvas id="scene"></canvas>
+        </div>
+        <div class="right-panel">
+          <div class="panel-section">
+            <h3>Material Options</h3>
+            <div class="material-options">
+              <button class="material-btn active" data-material="wood">Wood</button>
+              <button class="material-btn" data-material="white">White</button>
+              <button class="material-btn" data-material="black">Black</button>
+              <button class="material-btn" data-material="gray">Gray</button>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>Specifications</h3>
+            <div class="specs">
+              <div class="spec-item">
+                <span class="spec-label">Total Width:</span>
+                <span class="spec-value" id="total-width">60 cm</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Total Height:</span>
+                <span class="spec-value" id="total-height">60 cm</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Total Depth:</span>
+                <span class="spec-value" id="total-depth">60 cm</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Modules:</span>
+                <span class="spec-value" id="module-count">1</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>View Options</h3>
+            <div class="view-options">
+              <button class="view-btn active" data-view="perspective">Perspective</button>
+              <button class="view-btn" data-view="front">Front</button>
+              <button class="view-btn" data-view="side">Side</button>
+              <button class="view-btn" data-view="top">Top</button>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>Export</h3>
+            <div class="export-options">
+              <button class="export-btn" id="screenshot">Take Screenshot</button>
+              <button class="export-btn" id="reset-view">Reset View</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
