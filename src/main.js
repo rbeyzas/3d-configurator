@@ -172,19 +172,14 @@ class WardrobeConfigurator {
     rightPanel.castShadow = true;
     moduleGroup.add(rightPanel);
 
-    // Add door handles
+    // Add single door handle in the center of the module
     const handleGeometry = new THREE.CylinderGeometry(0.5, 0.5, 8, 8);
     const handleMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
 
-    const leftHandle = new THREE.Mesh(handleGeometry, handleMaterial);
-    leftHandle.rotation.z = Math.PI / 2;
-    leftHandle.position.set(x - panelWidth / 2 - 2, y, z + this.currentDimensions.depth / 2 + 2.5);
-    moduleGroup.add(leftHandle);
-
-    const rightHandle = new THREE.Mesh(handleGeometry, handleMaterial);
-    rightHandle.rotation.z = Math.PI / 2;
-    rightHandle.position.set(x + panelWidth / 2 + 2, y, z + this.currentDimensions.depth / 2 + 2.5);
-    moduleGroup.add(rightHandle);
+    const centerHandle = new THREE.Mesh(handleGeometry, handleMaterial);
+    centerHandle.rotation.z = Math.PI / 2;
+    centerHandle.position.set(x, y, z + this.currentDimensions.depth / 2 + 2.5);
+    moduleGroup.add(centerHandle);
   }
 
   updateModules() {
