@@ -12,6 +12,7 @@ class WardrobeConfigurator {
     this.currentDimensions = { width: 60, height: 60, depth: 60 };
     this.moduleWidth = 60; // Base module width
     this.currentMaterial = 'wood'; // Track current material
+    this.individualModuleData = []; // Track individual module settings
 
     this.init();
     this.setupControls();
@@ -91,17 +92,30 @@ class WardrobeConfigurator {
     this.scene.add(pointLight);
   }
 
-  createModule(x, y, z) {
+  createModule(x, y, z, moduleIndex = null) {
     const moduleGroup = new THREE.Group();
+
+    // Get individual module settings or use global settings
+    let moduleSettings;
+    if (moduleIndex !== null && this.individualModuleData[moduleIndex]) {
+      moduleSettings = this.individualModuleData[moduleIndex];
+    } else {
+      moduleSettings = {
+        width: this.currentDimensions.width,
+        height: this.currentDimensions.height,
+        depth: this.currentDimensions.depth,
+        material: this.currentMaterial,
+      };
+    }
 
     // Create wardrobe geometry
     const geometry = new THREE.BoxGeometry(
-      this.currentDimensions.width,
-      this.currentDimensions.height,
-      this.currentDimensions.depth,
+      moduleSettings.width,
+      moduleSettings.height,
+      moduleSettings.depth,
     );
 
-    // Get current material color
+    // Get material color
     const colors = {
       wood: 0x8b4513,
       white: 0xffffff,
@@ -109,9 +123,9 @@ class WardrobeConfigurator {
       gray: 0x808080,
     };
 
-    // Create material with current material color
+    // Create material with module's material color
     const material = new THREE.MeshPhongMaterial({
-      color: colors[this.currentMaterial] || 0x8b4513,
+      color: colors[moduleSettings.material] || 0x8b4513,
       shininess: 30,
       transparent: true,
       opacity: 0.9,
@@ -125,15 +139,16 @@ class WardrobeConfigurator {
     // Add wardrobe to module group
     moduleGroup.add(wardrobe);
 
-    // Add door details
-    this.addDoorDetails(moduleGroup, x, y, z);
+    // Add door details with individual dimensions
+    this.addDoorDetails(moduleGroup, x, y, z, moduleSettings);
 
     // Store module data
     const moduleData = {
       group: moduleGroup,
       wardrobe: wardrobe,
       position: { x, y, z },
-      dimensions: { ...this.currentDimensions },
+      dimensions: { ...moduleSettings },
+      moduleIndex: moduleIndex,
     };
 
     this.modules.push(moduleData);
@@ -142,33 +157,33 @@ class WardrobeConfigurator {
     return moduleData;
   }
 
-  addDoorDetails(moduleGroup, x, y, z) {
+  addDoorDetails(moduleGroup, x, y, z, moduleSettings) {
     // Create door frame
     const doorFrameGeometry = new THREE.BoxGeometry(
-      this.currentDimensions.width - 4,
-      this.currentDimensions.height - 4,
+      moduleSettings.width - 4,
+      moduleSettings.height - 4,
       2,
     );
     const doorFrameMaterial = new THREE.MeshPhongMaterial({ color: 0x654321 });
     const doorFrame = new THREE.Mesh(doorFrameGeometry, doorFrameMaterial);
-    doorFrame.position.set(x, y, z + this.currentDimensions.depth / 2 + 1);
+    doorFrame.position.set(x, y, z + moduleSettings.depth / 2 + 1);
     doorFrame.castShadow = true;
     moduleGroup.add(doorFrame);
 
     // Create door panels
-    const panelWidth = (this.currentDimensions.width - 8) / 2;
-    const panelGeometry = new THREE.BoxGeometry(panelWidth, this.currentDimensions.height - 8, 1);
+    const panelWidth = (moduleSettings.width - 8) / 2;
+    const panelGeometry = new THREE.BoxGeometry(panelWidth, moduleSettings.height - 8, 1);
     const panelMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
 
     // Left panel
     const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
-    leftPanel.position.set(x - panelWidth / 2 - 2, y, z + this.currentDimensions.depth / 2 + 1.5);
+    leftPanel.position.set(x - panelWidth / 2 - 2, y, z + moduleSettings.depth / 2 + 1.5);
     leftPanel.castShadow = true;
     moduleGroup.add(leftPanel);
 
     // Right panel
     const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
-    rightPanel.position.set(x + panelWidth / 2 + 2, y, z + this.currentDimensions.depth / 2 + 1.5);
+    rightPanel.position.set(x + panelWidth / 2 + 2, y, z + moduleSettings.depth / 2 + 1.5);
     rightPanel.castShadow = true;
     moduleGroup.add(rightPanel);
 
@@ -178,7 +193,7 @@ class WardrobeConfigurator {
 
     const centerHandle = new THREE.Mesh(handleGeometry, handleMaterial);
     centerHandle.rotation.z = Math.PI / 2;
-    centerHandle.position.set(x, y, z + this.currentDimensions.depth / 2 + 2.5);
+    centerHandle.position.set(x, y, z + moduleSettings.depth / 2 + 2.5);
     moduleGroup.add(centerHandle);
   }
 
@@ -193,14 +208,24 @@ class WardrobeConfigurator {
     const totalWidth = this.currentDimensions.width;
     const numModules = Math.ceil(totalWidth / this.moduleWidth);
 
-    // Create modules
+    // Create modules with proper positioning
+    let currentX = 0;
     for (let i = 0; i < numModules; i++) {
-      const x = i * this.moduleWidth;
-      this.createModule(x, 0, 0);
+      // For automatic module creation, each module should be 60cm wide
+      let moduleWidth = 60; // Fixed width for automatic modules
+
+      // If individual settings exist, use them
+      if (this.individualModuleData[i]) {
+        moduleWidth = this.individualModuleData[i].width;
+      }
+
+      this.createModule(currentX, 0, 0, i);
+      currentX += moduleWidth; // Position next module after current module's width
     }
 
-    // Update module counter
+    // Update module counter and controls
     this.updateModuleCounter();
+    this.updateIndividualModuleControls();
   }
 
   updateModuleCounter() {
@@ -223,6 +248,149 @@ class WardrobeConfigurator {
     document.getElementById('module-count').textContent = this.modules.length;
   }
 
+  updateIndividualModuleControls() {
+    const container = document.getElementById('module-controls');
+    container.innerHTML = '';
+
+    this.modules.forEach((module, index) => {
+      const moduleControl = this.createModuleControl(index, module);
+      container.appendChild(moduleControl);
+    });
+  }
+
+  createModuleControl(moduleIndex, module) {
+    const moduleDiv = document.createElement('div');
+    moduleDiv.className = 'module-control';
+    moduleDiv.dataset.moduleIndex = moduleIndex;
+
+    // Get module settings or create default
+    if (!this.individualModuleData[moduleIndex]) {
+      this.individualModuleData[moduleIndex] = {
+        width: this.currentDimensions.width,
+        height: this.currentDimensions.height,
+        depth: this.currentDimensions.depth,
+        material: this.currentMaterial,
+      };
+    }
+
+    const settings = this.individualModuleData[moduleIndex];
+
+    moduleDiv.innerHTML = `
+      <div class="module-header">
+        <div class="module-title">
+          <span class="module-number">${moduleIndex + 1}</span>
+          Module ${moduleIndex + 1}
+        </div>
+        <span>▼</span>
+      </div>
+      <div class="module-content">
+        <div class="module-dimensions">
+          <div class="module-dimension">
+            <label>Width: <span class="module-width-value">${settings.width}</span> cm</label>
+            <input type="range" class="module-width" min="60" max="120" value="${
+              settings.width
+            }" step="10">
+          </div>
+          <div class="module-dimension">
+            <label>Height: <span class="module-height-value">${settings.height}</span> cm</label>
+            <input type="range" class="module-height" min="60" max="240" value="${
+              settings.height
+            }" step="10">
+          </div>
+          <div class="module-dimension">
+            <label>Depth: <span class="module-depth-value">${settings.depth}</span> cm</label>
+            <input type="range" class="module-depth" min="60" max="120" value="${
+              settings.depth
+            }" step="10">
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners
+    this.setupModuleControlEvents(moduleDiv, moduleIndex);
+
+    return moduleDiv;
+  }
+
+  setupModuleControlEvents(moduleDiv, moduleIndex) {
+    // Toggle module content
+    const header = moduleDiv.querySelector('.module-header');
+    const content = moduleDiv.querySelector('.module-content');
+
+    header.addEventListener('click', () => {
+      content.classList.toggle('active');
+      const arrow = header.querySelector('span:last-child');
+      arrow.textContent = content.classList.contains('active') ? '▲' : '▼';
+    });
+
+    // Width control
+    const widthSlider = moduleDiv.querySelector('.module-width');
+    const widthValue = moduleDiv.querySelector('.module-width-value');
+    widthSlider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      widthValue.textContent = value;
+      this.individualModuleData[moduleIndex].width = value;
+      this.updateSingleModule(moduleIndex);
+    });
+
+    // Height control
+    const heightSlider = moduleDiv.querySelector('.module-height');
+    const heightValue = moduleDiv.querySelector('.module-height-value');
+    heightSlider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      heightValue.textContent = value;
+      this.individualModuleData[moduleIndex].height = value;
+      this.updateSingleModule(moduleIndex);
+    });
+
+    // Depth control
+    const depthSlider = moduleDiv.querySelector('.module-depth');
+    const depthValue = moduleDiv.querySelector('.module-depth-value');
+    depthSlider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      depthValue.textContent = value;
+      this.individualModuleData[moduleIndex].depth = value;
+      this.updateSingleModule(moduleIndex);
+    });
+  }
+
+  updateSingleModule(moduleIndex) {
+    // Remove the specific module and dispose of geometries
+    if (this.modules[moduleIndex]) {
+      const oldModule = this.modules[moduleIndex];
+
+      // Dispose of all geometries and materials in the module group
+      oldModule.group.traverse((child) => {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          child.material.dispose();
+        }
+      });
+
+      this.scene.remove(oldModule.group);
+    }
+
+    // Calculate new position based on all modules
+    let currentX = 0;
+    for (let i = 0; i < moduleIndex; i++) {
+      if (this.individualModuleData[i]) {
+        currentX += this.individualModuleData[i].width;
+      } else {
+        currentX += 60; // Default module width
+      }
+    }
+
+    // Recreate the module with new settings and position
+    const newModule = this.createModule(currentX, 0, 0, moduleIndex);
+    this.modules[moduleIndex] = newModule;
+
+    // Force render update
+    this.renderer.render(this.scene, this.camera);
+  }
+
   setupControls() {
     const widthSlider = document.getElementById('width');
     const heightSlider = document.getElementById('height');
@@ -235,6 +403,10 @@ class WardrobeConfigurator {
     widthSlider.addEventListener('input', (e) => {
       this.currentDimensions.width = parseInt(e.target.value);
       widthValue.textContent = e.target.value;
+
+      // Clear individual module data when global width changes
+      this.individualModuleData = [];
+
       this.updateModules();
       this.updateSpecifications();
     });

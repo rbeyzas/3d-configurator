@@ -320,6 +320,104 @@ body {
   box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
+/* Individual Module Controls */
+.module-control {
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 15px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s ease;
+}
+
+.module-header:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.module-header .module-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.module-header .module-number {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.module-content {
+  padding: 15px;
+  background: white;
+  display: none;
+}
+
+.module-content.active {
+  display: block;
+}
+
+.module-dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.module-dimension {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.module-dimension label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 600;
+}
+
+.module-dimension input[type='range'] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e0e0e0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.module-dimension input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.module-dimension input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* Loading animation */
 .loading {
   position: absolute;
