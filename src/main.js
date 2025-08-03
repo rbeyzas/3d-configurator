@@ -130,8 +130,6 @@ class WardrobeConfigurator {
       moduleSettings.depth,
     );
 
-    console.log(`Creating module ${moduleIndex} with settings:`, moduleSettings);
-
     const materialProperties = {
       wood: {
         color: 0x8b4513,
@@ -231,8 +229,6 @@ class WardrobeConfigurator {
   }
 
   updateModules() {
-    console.log(`Updating modules - current width: ${this.currentDimensions.width}`);
-
     this.modules.forEach((module) => {
       this.scene.remove(module.group);
     });
@@ -240,7 +236,6 @@ class WardrobeConfigurator {
 
     const totalWidth = this.currentDimensions.width;
     const numModules = Math.ceil(totalWidth / 60);
-    console.log(`Creating ${numModules} modules`);
 
     let currentX = 0;
     for (let i = 0; i < numModules; i++) {
@@ -281,8 +276,6 @@ class WardrobeConfigurator {
     let maxHeight = 0;
     let maxDepth = 0;
 
-    console.log('Calculating specifications for modules:', this.modules.length);
-
     this.modules.forEach((module, index) => {
       const moduleWidth = module.dimensions.width;
       const moduleHeight = module.dimensions.height;
@@ -291,13 +284,7 @@ class WardrobeConfigurator {
       actualTotalWidth += moduleWidth;
       maxHeight = Math.max(maxHeight, moduleHeight);
       maxDepth = Math.max(maxDepth, moduleDepth);
-
-      console.log(
-        `Module ${index}: width=${moduleWidth}, height=${moduleHeight}, depth=${moduleDepth}`,
-      );
     });
-
-    console.log(`Final specs: width=${actualTotalWidth}, height=${maxHeight}, depth=${maxDepth}`);
 
     document.getElementById('total-width').textContent = `${actualTotalWidth} cm`;
     document.getElementById('total-height').textContent = `${maxHeight} cm`;
@@ -317,7 +304,6 @@ class WardrobeConfigurator {
     }
 
     this._updatingControls = true;
-    console.log(`Updating ${this.modules.length} module controls`);
 
     container.innerHTML = '';
 
@@ -327,7 +313,6 @@ class WardrobeConfigurator {
     });
 
     this._updatingControls = false;
-    console.log(`Updated ${this.modules.length} module controls`);
   }
 
   createModuleControl(moduleIndex, module) {
@@ -345,8 +330,6 @@ class WardrobeConfigurator {
     }
 
     const settings = this.individualModuleData[moduleIndex];
-
-    console.log(`Creating control for module ${moduleIndex} with settings:`, settings);
 
     moduleDiv.innerHTML = `
       <div class="module-header">
@@ -390,8 +373,6 @@ class WardrobeConfigurator {
   }
 
   setupModuleControlEvents(moduleDiv, moduleIndex) {
-    console.log(`Setting up events for module ${moduleIndex}`);
-
     const header = moduleDiv.querySelector('.module-header');
     const content = moduleDiv.querySelector('.module-content');
 
@@ -410,14 +391,10 @@ class WardrobeConfigurator {
     // Height control
     const heightSlider = moduleDiv.querySelector('.module-height');
     const heightValue = moduleDiv.querySelector('.module-height-value');
-    console.log(
-      `Module ${moduleIndex}: heightSlider=${!!heightSlider}, heightValue=${!!heightValue}`,
-    );
 
     if (heightSlider && heightValue) {
       heightSlider.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
-        console.log(`Height slider changed for module ${moduleIndex}: ${value}`);
         heightValue.textContent = value;
         if (!this.individualModuleData[moduleIndex]) {
           this.individualModuleData[moduleIndex] = {};
@@ -433,7 +410,6 @@ class WardrobeConfigurator {
     // Depth control
     const depthSlider = moduleDiv.querySelector('.module-depth');
     const depthValue = moduleDiv.querySelector('.module-depth-value');
-    console.log(`Module ${moduleIndex}: depthSlider=${!!depthSlider}, depthValue=${!!depthValue}`);
 
     if (depthSlider && depthValue) {
       depthSlider.addEventListener('input', (e) => {
@@ -453,11 +429,8 @@ class WardrobeConfigurator {
   }
 
   updateSingleModule(moduleIndex) {
-    console.log(`Updating single module ${moduleIndex}`);
-
     if (this.modules[moduleIndex]) {
       const oldModule = this.modules[moduleIndex];
-      console.log(`Removing old module ${moduleIndex}`);
 
       oldModule.group.traverse((child) => {
         if (child.geometry) {
@@ -484,8 +457,6 @@ class WardrobeConfigurator {
   }
 
   updateSubsequentModules(startIndex) {
-    console.log(`Updating subsequent modules from index ${startIndex}`);
-
     for (let i = startIndex; i < this.modules.length; i++) {
       if (this.modules[i]) {
         const oldModule = this.modules[i];
@@ -501,7 +472,6 @@ class WardrobeConfigurator {
       }
 
       const currentX = i * 60;
-      console.log(`Creating subsequent module ${i} at position ${currentX}`);
       const newModule = this.createModule(currentX, 0, 0, i);
       this.modules[i] = newModule;
     }
