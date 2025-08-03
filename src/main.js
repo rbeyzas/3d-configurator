@@ -40,7 +40,13 @@ class WardrobeConfigurator {
       canvas: canvas,
       antialias: true,
     });
-    this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+    // Force canvas to fill container
+    const container = canvas.parentElement;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    this.renderer.setSize(containerWidth, containerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -296,14 +302,25 @@ class WardrobeConfigurator {
 
   setupExportControls() {
     // Screenshot button
-    document.getElementById('screenshot').addEventListener('click', () => {
-      this.takeScreenshot();
-    });
+    const screenshotBtn = document.getElementById('screenshot');
+    if (screenshotBtn) {
+      screenshotBtn.addEventListener('click', () => {
+        this.takeScreenshot();
+      });
+    } else {
+      console.error('Screenshot button not found');
+    }
 
     // Reset view button
-    document.getElementById('reset-view').addEventListener('click', () => {
-      this.resetView();
-    });
+    const resetViewBtn = document.getElementById('reset-view');
+    if (resetViewBtn) {
+      resetViewBtn.addEventListener('click', () => {
+        console.log('Reset view button clicked');
+        this.resetView();
+      });
+    } else {
+      console.error('Reset view button not found');
+    }
   }
 
   changeMaterial(material) {
@@ -352,15 +369,63 @@ class WardrobeConfigurator {
   }
 
   resetView() {
+    console.log('Resetting all customizations to default');
+
+    // Reset camera position
     this.camera.position.set(200, 150, 200);
     this.controls.target.set(0, 0, 0);
     this.controls.update();
+
+    // Reset dimensions to default
+    this.currentDimensions = { width: 60, height: 60, depth: 60 };
+
+    // Reset material to wood
+    this.currentMaterial = 'wood';
+
+    // Update sliders to default values
+    const widthSlider = document.getElementById('width');
+    const heightSlider = document.getElementById('height');
+    const depthSlider = document.getElementById('depth');
+    const widthValue = document.getElementById('width-value');
+    const heightValue = document.getElementById('height-value');
+    const depthValue = document.getElementById('depth-value');
+
+    if (widthSlider) widthSlider.value = 60;
+    if (heightSlider) heightSlider.value = 60;
+    if (depthSlider) depthSlider.value = 60;
+    if (widthValue) widthValue.textContent = '60';
+    if (heightValue) heightValue.textContent = '60';
+    if (depthValue) depthValue.textContent = '60';
+
+    // Reset material buttons
+    const materialBtns = document.querySelectorAll('.material-btn');
+    materialBtns.forEach((btn) => {
+      btn.classList.remove('active');
+      if (btn.dataset.material === 'wood') {
+        btn.classList.add('active');
+      }
+    });
+
+    // Reset view buttons
+    const viewBtns = document.querySelectorAll('.view-btn');
+    viewBtns.forEach((btn) => {
+      btn.classList.remove('active');
+      if (btn.dataset.view === 'perspective') {
+        btn.classList.add('active');
+      }
+    });
+
+    // Update modules with default settings
+    this.updateModules();
+
+    console.log('All customizations reset to default');
   }
 
   onWindowResize() {
     const canvas = document.getElementById('scene');
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    const container = canvas.parentElement;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
