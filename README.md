@@ -148,9 +148,15 @@ public/
 
 ## 🚀 Live Demo
 
+🌐 **Live Application**: [3D Wardrobe Configurator](https://3d-configurator-silk.vercel.app/)
+
 ### Local Development
 
 ```bash
+# Install dependencies
+bun install
+
+# Start development server
 bun run dev
 # Open http://localhost:5173
 ```
@@ -158,7 +164,6 @@ bun run dev
 ### Production Build
 
 ```bash
+# Build for production
 bun run build
-# Deploy dist/ folder to your hosting service
-
 ```
